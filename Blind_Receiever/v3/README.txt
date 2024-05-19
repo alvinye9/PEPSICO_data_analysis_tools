@@ -1,0 +1,1 @@
+v3 of the GUI iterates through Blind Receiever, crosses out invalid locations, finds all negative pallets and highlights the last timestamp of that section (mixed event). Then it highlights the two timestamps preceding and following the mixed event.
