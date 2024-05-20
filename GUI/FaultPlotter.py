@@ -1,5 +1,6 @@
 import pandas as pd
 import matplotlib.pyplot as plt
+import webbrowser
 
 class FaultPlotter:
     def __init__(self, csv_file_path):
@@ -82,4 +83,5 @@ class FaultPlotter:
         # Adjust layout to make space for the legend
         plt.tight_layout(rect=[0, 0, 1, 0.95])
         plt.savefig("Fault_Data.jpg")
+        webbrowser.open_new('Fault_Data.jpg')
         plt.show()

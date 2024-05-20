@@ -4,20 +4,25 @@ from FaultPlotter import FaultPlotter
 from BlindReceiverHighlighter import BFHighlighter
 import sys
 from PIL import Image, ImageTk
+import os
 
 class GUI:
     def __init__(self):
         self.root = tk.Tk()
         self.root.title("Alvin's PEPSICO Data Analysis Suite")
         
-        # Load and resize the image
-        self.original_image = Image.open("Frito.png")
-        self.resized_image = self.original_image.resize((150, 100), Image.LANCZOS)
-        self.logo = ImageTk.PhotoImage(self.resized_image)
+        # Determine the path to the image
+        base_path = getattr(sys, '_MEIPASS', os.path.dirname(os.path.abspath(__file__)))
+        image_path = os.path.join(base_path, 'resources', 'logo.png')
+        
+        # # Load and resize the image
+        # self.original_image = Image.open(image_path)
+        # self.resized_image = self.original_image.resize((150, 100), Image.LANCZOS)
+        # self.logo = ImageTk.PhotoImage(self.resized_image)
 
-        # Create a label for the image and place it at the top left corner
-        logo_label = tk.Label(self.root, image=self.logo)
-        logo_label.pack(side=tk.TOP, anchor=tk.NW, padx=10, pady=10)
+        # # Create a label for the image and place it at the top left corner
+        # logo_label = tk.Label(self.root, image=self.logo)
+        # logo_label.pack(side=tk.TOP, anchor=tk.NW, padx=10, pady=10)
         
         browse_button = tk.Button(self.root, text="Highlight Blind Receiver (.rpt)", command=self.browse_rpt)
         browse_button.pack(pady=20)
