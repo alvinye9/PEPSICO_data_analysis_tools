@@ -1,6 +1,8 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 import webbrowser
+import matplotlib.cm as cm
+from matplotlib.colors import ListedColormap
 
 class FaultPlotter:
     def __init__(self, csv_file_path):
@@ -52,12 +54,20 @@ class FaultPlotter:
         pivot_table = melted_data.pivot(index='Vehicle Number', columns='Fault Type', values='Fault Count').fillna(0)
         pivot_table = pivot_table.sort_index()
 
+        # List of 40 distinct colors
+        colors = [
+            "#1f77b4", "#ff7f0e", "#2ca02c", "#d62728", "#9467bd", "#8c564b", "#e377c2", "#7f7f7f", "#bcbd22", "#17becf",
+            "#aec7e8", "#ffbb78", "#98df8a", "#ff9896", "#c5b0d5", "#c49c94", "#f7b6d2", "#c7c7c7", "#dbdb8d", "#9edae5",
+            "#393b79", "#637939", "#8c6d31", "#843c39", "#7b4173", "#a55194", "#d6616b", "#e7ba52", "#7f2704", "#e7969c",
+            "#17becf", "#bcbd22", "#dbdb8d", "#6b6ecf", "#9c9ede", "#8ca252", "#b5cf6b", "#cedb9c", "#bd9e39", "#e7cb94"
+        ]
+
         # Plot each fault type in a stacked manner
         bottom = None
-        colors = plt.cm.get_cmap('tab20', len(pivot_table.columns))
+        # colors = plt.cm.get_cmap('tab20', len(pivot_table.columns))
 
         for i, fault_type in enumerate(pivot_table.columns):
-            bars = plt.bar(pivot_table.index.astype(str), pivot_table[fault_type], bottom=bottom, label=fault_type, color=colors(i))
+            bars = plt.bar(pivot_table.index.astype(str), pivot_table[fault_type], bottom=bottom, label=fault_type, color=colors[i])
             if bottom is None:
                 bottom = pivot_table[fault_type]
             else:
