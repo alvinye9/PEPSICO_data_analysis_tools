@@ -1,5 +1,6 @@
 # Ignore the dataset directory
 /dataset/
+/classes/
 
 # Ignore Python bytecode files
 __pycache__/

@@ -3,31 +3,20 @@ from datetime import datetime
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
 from reportlab.lib import colors
-import tkinter as tk
-from tkinter import filedialog, simpledialog
+import webbrowser
 
-
-class RPTtoPDFHighlighter:
-    def __init__(self):
+class BFHighlighter:
+    def __init__(self, rpt_file_path):
         self.TIME_PATTERN = re.compile(r'\d{1,2}:\d{2}')  # Regex to find time in format H:MM or HH:MM
         self.QUANTITY_PATTERN = re.compile(r'\s+\d+\s+\d+\s+\d+\s*$')  # Regex to match lines with quantities at the end
         self.START_PATTERN = re.compile(r'^\s*\d{6}')  # Regex to match lines starting with a 6-digit number
         self.LOCATION_ID_PATTERN = re.compile(r'\s+(?:\d+|D\d+|T\d+)\s*$')  # Regex to match location IDs
-        self.EXCLAMATION_PATTERN = re.compile(r'!') # start with !
-        
-        self.root = tk.Tk()
-        self.root.title("Alvin's PEPSICO Data Analysis Suite")
-
-        browse_button = tk.Button(self.root, text="Browse for .rpt file", command=self.browse_file)
-        browse_button.pack(pady=20)
-
-        create_pdf_button = tk.Button(self.root, text="Create Highlighted PDF", command=self.create_pdf)
-        create_pdf_button.pack(pady=20)
-        
+        self.EXCLAMATION_PATTERN = re.compile(r'!')  # start with !
+   
+        self.rpt_file_path = rpt_file_path
         self.crossed_rows = []
-        
-        self.root.mainloop()
-
+        self.txt_file_name = "./Blind_Receiver.txt"
+        self.rpt_to_txt(rpt_file_path)
 
     @staticmethod
     def parse_time(time_str):
@@ -66,11 +55,10 @@ class RPTtoPDFHighlighter:
         """
         rows_with_times = []
         crossed_rows = self.crossed_rows
-        
+
         # Collect all rows with timestamps and their times
         for line in lines:
             if self.TIME_PATTERN.search(line) and self.START_PATTERN.match(line) and line not in crossed_rows:
-                # print("Valid Row with timestamps: ", line)
                 rows_with_times.append((line, self.parse_time(self.TIME_PATTERN.search(line).group())))
 
         # Get the target time from the start index
@@ -86,13 +74,12 @@ class RPTtoPDFHighlighter:
         current_row = [lines[start_index]]
         future_rows = sorted([line for line, time in rows_with_times if time > target_time], key=lambda x: self.parse_time(self.TIME_PATTERN.search(x).group()))[:2]
 
-        print("Occurence of Mixed Event: ", lines[start_index])
+        print("Occurrence of Mixed Event: ", lines[start_index])
         for row in previous_rows:
             print("Row Prior to Mixed Event: ", row.strip())
         for row in future_rows:
             print("Row After Mixed Event: ", row.strip())
         return previous_rows, current_row, future_rows
-
 
     def find_highlight_rows(self, txt_filename):
         """
@@ -111,29 +98,21 @@ class RPTtoPDFHighlighter:
             lines = txt_file.readlines()
 
             for i, line in enumerate(lines):
-                    
-                if self.QUANTITY_PATTERN.search(line) and self.START_PATTERN.match(line): #finds "Quantity Line" 
+                if self.QUANTITY_PATTERN.search(line) and self.START_PATTERN.match(line):  # finds "Quantity Line"
                     received_qty, order_qty = self.extract_quantities(line)
                     if received_qty is not None and order_qty is not None and received_qty < order_qty:
-                        if i + 1 < len(lines): #make sure that current line is not the last line
+                        if i + 1 < len(lines):  # make sure that current line is not the last line
                             i += 1
-                            next_line = lines[i] #updates next_line
-                            while i < len(lines) and (self.TIME_PATTERN.search(lines[i+1]) and self.START_PATTERN.match(lines[i+1])): #while we do not exceed # lines and the next line is a "Timestamped Line"
+                            next_line = lines[i]  # updates next_line
+                            while i < len(lines) and (self.TIME_PATTERN.search(lines[i+1]) and self.START_PATTERN.match(lines[i+1])):  # while we do not exceed # lines and the next line is a "Timestamped Line"
                                 next_line = lines[i]
                                 i += 1
-                                print( "Current Row: ", lines[i])
-                            current_row= [next_line]
+                                print("Current Row: ", lines[i])
+                            current_row = [next_line]
                             prev, curr, fut = self.find_closest_timestamped_rows(lines, i)
                             previous_rows.extend(prev)
                             future_rows.extend(fut)
-                            "print here"
-                            break    
-                            # if self.TIME_PATTERN.search(next_line) and self.START_PATTERN.match(next_line):   #code to update current_row as the next timestamped row (DEPRACATED)
-                            #     current_row = [next_line]
-                            #     prev, curr, fut = self.find_closest_timestamped_rows(lines, i + 1)
-                            #     previous_rows.extend(prev)
-                            #     future_rows.extend(fut)
-                            #     break
+                            break
 
         return previous_rows, current_row, future_rows
 
@@ -170,11 +149,10 @@ class RPTtoPDFHighlighter:
                     c.rect(30, y_position - 2, width - 60, line_height, fill=True, stroke=False)
                     c.setFillColor(colors.black)
                 elif line in crossed_rows:
-                    # print(line)
                     c.setFillColor(colors.black)
                     c.setLineWidth(1)  # Set line width for crossing out
                     offset = 2
-                    c.line(30, y_position + line_height / 2 - offset, width , y_position + line_height / 2 - offset)
+                    c.line(30, y_position + line_height / 2 - offset, width, y_position + line_height / 2 - offset)
 
                 c.drawString(30, y_position, line.strip())
                 y_position -= line_height
@@ -185,15 +163,6 @@ class RPTtoPDFHighlighter:
                     y_position = height - 40
 
         c.save()
-
-    def browse_file(self):
-        """
-        Opens a file dialog to browse for a .rpt file and converts it to a .txt file.
-        """
-        file_path = filedialog.askopenfilename(filetypes=[("RPT files", "*.rpt")])
-        if file_path:
-            self.convert_rpt_to_txt(file_path, 'output.txt')
-            self.updatedCrossedOutRows()
 
     @staticmethod
     def convert_rpt_to_txt(rpt_filename, txt_filename):
@@ -211,24 +180,19 @@ class RPTtoPDFHighlighter:
         """
         Prompts the user for a desired time and creates the highlighted PDF.
         """
-        self.highlight_rows_in_pdf('./output.txt', 'Blind_Receiver_highlighted.pdf')
+        self.highlight_rows_in_pdf(self.txt_file_name, 'Blind_Receiver_highlighted.pdf')
         print(f"Highlighted rows written to Blind_Receiver_highlighted.pdf.")
-        
+        webbrowser.open_new('Blind_Receiver_highlighted.pdf')
+
     def updatedCrossedOutRows(self):
-        with open("output.txt", 'r') as txt_file:
+        with open(self.txt_file_name, 'r') as txt_file:
             lines = txt_file.readlines()
-            # print(lines)
 
             for i, line in enumerate(lines):
                 if self.TIME_PATTERN.search(line) and (self.START_PATTERN.search(line) or self.EXCLAMATION_PATTERN.search(line)) and self.LOCATION_ID_PATTERN.search(line):
-                # if self.EXCLAMATION_PATTERN.search(line):
                     print("Inaccessible Location: ", line)
                     self.crossed_rows.append(line)
-                    # print("Done Crossing Out Inacessible Locations")
 
-        
-
-
-if __name__ == "__main__":
-    RPTtoPDFHighlighter()
-
+    def rpt_to_txt(self, rpt_file):
+        self.convert_rpt_to_txt(rpt_file, self.txt_file_name)
+        self.updatedCrossedOutRows()
