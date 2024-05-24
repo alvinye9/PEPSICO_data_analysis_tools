@@ -12,11 +12,19 @@ class BFHighlighter:
         self.START_PATTERN = re.compile(r'^\s*\d{6}')  # Regex to match lines starting with a 6-digit number
         self.LOCATION_ID_PATTERN = re.compile(r'\s+(?:\d+|D\d+|T\d+)\s*$')  # Regex to match location IDs
         self.EXCLAMATION_PATTERN = re.compile(r'!')  # start with !
-   
+
         self.rpt_file_path = rpt_file_path
         self.crossed_rows = []
+        self.pos_quant_indices = []
+        self.neg_quant_indices = []
+        self.even_quant_indices = []
         self.txt_file_name = "./Blind_Receiver.txt"
         self.rpt_to_txt(rpt_file_path)
+        self.updateIndices()
+
+        # print("Negative Quant Indices: ", self.neg_quant_indices)
+        # print("Even Quant Indices: ", self.even_quant_indices)
+        # print("Positive Quant Indices: ", self.pos_quant_indices)
 
     @staticmethod
     def parse_time(time_str):
@@ -31,6 +39,22 @@ class BFHighlighter:
         except ValueError:
             return None
 
+    def determine_section(self, a_indices, b_indices, c_indices, index):
+        # Combine the indices with section identifiers
+        sections = [(i, 'Pos') for i in a_indices] + [(i, 'Even') for i in b_indices] + [(i, 'Neg') for i in c_indices]
+        # Sort the combined list by indices
+        sections.sort()
+
+        # Iterate through the sorted sections to find the correct section
+        current_section = None
+        for i, section in sections:
+            if index < i:
+                break
+            current_section = section
+
+        return current_section
+
+
     def extract_quantities(self, line):
         """
         Extract the last two quantities from the line.
@@ -42,8 +66,30 @@ class BFHighlighter:
         if len(quantities) >= 3:
             received_qty = int(quantities[-2])
             order_qty = int(quantities[-3])
-            return received_qty, order_qty
-        return None, None
+            diff_qty = int(quantities[-1])
+            return received_qty, order_qty, diff_qty
+        # Determine the sign for diff_qty
+        if received_qty > order_qty:
+            diff_qty = f"+{diff_qty}"
+        elif received_qty < order_qty:
+            diff_qty = f"-{diff_qty}"
+        else:
+            diff_qty = f"{diff_qty}"
+        return None, None, None
+
+    def extract_pallet_size(self, line):
+        """
+        Extract the last two quantities from the line.
+
+        :param line: The line from the file.
+        :return: Tuple of (received quantity, order quantity) if both are found, else (None, None).
+        """
+        quantities = re.findall(r'\d+', line)
+        if len(quantities) >= 3:
+            pallet_size = int(quantities[-2])
+            # print("Pallet Size: ",pallet_size)
+            return pallet_size
+        return None
 
     def find_closest_timestamped_rows(self, lines, start_index):
         """
@@ -53,13 +99,20 @@ class BFHighlighter:
         :param start_index: The starting index to search around.
         :return: A tuple of three lists: previous rows, current row, and future rows.
         """
-        rows_with_times = []
+        full_pallet_rows_with_times = []
+        partial_pallet_rows_with_times = []
+        pos_sec_rows_with_times = []
         crossed_rows = self.crossed_rows
 
-        # Collect all rows with timestamps and their times
-        for line in lines:
-            if self.TIME_PATTERN.search(line) and self.START_PATTERN.match(line) and line not in crossed_rows:
-                rows_with_times.append((line, self.parse_time(self.TIME_PATTERN.search(line).group())))
+        # Find valid timestamped rows
+        for idx, line in enumerate(lines):
+            if self.TIME_PATTERN.search(line) and (self.START_PATTERN.search(line) or self.EXCLAMATION_PATTERN.search(line)): #is a timestamped row
+                # pallet_size = self.extract_pallet_size(line)
+                # print("Timestamped Row: ", line)
+                if self.determine_section(self.pos_quant_indices,self.even_quant_indices, self.neg_quant_indices, idx) == "Pos":
+                    pos_sec_rows_with_times.append((line, self.parse_time(self.TIME_PATTERN.search(line).group())))
+                else:
+                  full_pallet_rows_with_times.append((line, self.parse_time(self.TIME_PATTERN.search(line).group())))
 
         # Get the target time from the start index
         time_match = self.TIME_PATTERN.search(lines[start_index])
@@ -69,17 +122,86 @@ class BFHighlighter:
             print("ERROR: CURRENT ROW DOES NOT HAVE TIME STAMP")
             return [], [lines[start_index]], []
 
-        # Separate rows into previous, current, and future
-        previous_rows = sorted([line for line, time in rows_with_times if time < target_time], key=lambda x: self.parse_time(self.TIME_PATTERN.search(x).group()))[-2:]
-        current_row = [lines[start_index]]
-        future_rows = sorted([line for line, time in rows_with_times if time > target_time], key=lambda x: self.parse_time(self.TIME_PATTERN.search(x).group()))[:2]
+        print("Time of Mixed Event: ", target_time.strftime("%H:%M"))
 
-        print("Occurrence of Mixed Event: ", lines[start_index])
-        for row in previous_rows:
-            print("Row Prior to Mixed Event: ", row.strip())
-        for row in future_rows:
-            print("Row After Mixed Event: ", row.strip())
-        return previous_rows, current_row, future_rows
+        # Calculate Previous Timestamps in positive sections
+        # Filter lines where the time is greater than the target time
+        filtered_lines = []
+        for line, time in pos_sec_rows_with_times:
+        #   print(time, " is greater than ", target_time, " ", time < target_time)
+            if time < target_time:
+                filtered_lines.append(line)
+        # print(filtered_lines)
+        sorted_filtered_lines = sorted(
+            filtered_lines,
+            key=lambda x: self.parse_time(self.TIME_PATTERN.search(x).group())
+        )
+        # print("Timestamps before: ", target_time, " : ", sorted_filtered_lines)
+
+        previous_rows = []
+        previous_rows = sorted_filtered_lines[-2:] #if sorted_filtered_lines else [] #extract the previous two items
+        # print("Number of Previous Timestamps: ", len(previous_rows))
+        medium_priority_rows = []
+        high_priority_row = []
+        if(len(previous_rows)==2):
+            high_priority_row = previous_rows[1]
+            medium_priority_rows = previous_rows[0]
+        elif(len(previous_rows)==1):
+            high_priority_row = previous_rows[0]
+        else:
+            high_priority_row = []
+            medium_priority_rows = []
+
+        # print("High Priority: ", high_priority_row)
+        # print("Medium Priority: ", medium_priority_rows)
+
+        # Calculate Future Timestamps in positive sections
+        filtered_lines = []
+        for line, time in pos_sec_rows_with_times:
+        #   print(time, " is less than target_time", target_time, "  ", time > target_time)
+            if time > target_time:
+                filtered_lines.append(line)
+        # print(filtered_lines)
+        sorted_filtered_lines = sorted(
+            filtered_lines,
+            key=lambda x: self.parse_time(self.TIME_PATTERN.search(x).group())
+        )
+        # print("Timestamps After: ", target_time, " : ", sorted_filtered_lines)
+
+        future_rows = []
+        if sorted_filtered_lines:
+            future_rows = sorted_filtered_lines[1:] #extract the first item
+        if(len(future_rows) > 0):
+            medium_priority_rows.append(future_rows[0])
+        # else:
+        #     print("NO FUTURE ROWS")
+
+        for line, time in pos_sec_rows_with_times:
+            pallet_size = self.extract_pallet_size(line)
+            if not(pallet_size % 6 == 0):
+                partial_pallet_rows_with_times.append(line)
+
+        low_priority_rows = partial_pallet_rows_with_times
+        # print("Low Priority: Partial Pallets")
+
+        if(len(high_priority_row) == 0):
+            high_priority_row = lines[start_index]
+
+        return medium_priority_rows, high_priority_row, low_priority_rows
+
+    def updateIndices(self):
+        with open(self.txt_file_name, 'r') as txt_file:
+            lines = txt_file.readlines()
+            for i, line in enumerate(lines):
+                if self.QUANTITY_PATTERN.search(line) and self.START_PATTERN.match(line) and not(self.TIME_PATTERN.search(line)):  # finds "Quantity Line"
+                  # print("quantity Line: ", line, " Index: ", i)
+                    received_qty, order_qty, diff_qty = self.extract_quantities(line)
+                    if received_qty < order_qty:
+                        self.neg_quant_indices.append(i)
+                    elif received_qty > order_qty:
+                        self.pos_quant_indices.append(i)
+                    else:
+                        self.even_quant_indices.append(i)
 
     def find_highlight_rows(self, txt_filename):
         """
@@ -96,24 +218,17 @@ class BFHighlighter:
 
         with open(txt_filename, 'r') as txt_file:
             lines = txt_file.readlines()
-
             for i, line in enumerate(lines):
-                if self.QUANTITY_PATTERN.search(line) and self.START_PATTERN.match(line):  # finds "Quantity Line"
-                    received_qty, order_qty = self.extract_quantities(line)
-                    if received_qty is not None and order_qty is not None and received_qty < order_qty:
-                        if i + 1 < len(lines):  # make sure that current line is not the last line
-                            i += 1
-                            next_line = lines[i]  # updates next_line
-                            while i < len(lines) and (self.TIME_PATTERN.search(lines[i+1]) and self.START_PATTERN.match(lines[i+1])):  # while we do not exceed # lines and the next line is a "Timestamped Line"
-                                next_line = lines[i]
-                                i += 1
-                                print("Current Row: ", lines[i])
-                            current_row = [next_line]
-                            prev, curr, fut = self.find_closest_timestamped_rows(lines, i)
-                            previous_rows.extend(prev)
-                            future_rows.extend(fut)
-                            break
+              if self.QUANTITY_PATTERN.search(line) and self.START_PATTERN.match(line) and not(self.TIME_PATTERN.search(line)):  # finds "Quantity Line"
+                  # print("quantity Line: ", line, " Index: ", i)
+                  received_qty, order_qty, diff_qty = self.extract_quantities(line)
+                  if received_qty is not None and order_qty is not None and received_qty < order_qty:
 
+                      if i + 1 < len(lines):  # make sure that current line is not the last line
+                          i += 1
+                          next_line = lines[i]  # updates next_line to be first timestamped line in negative section
+                          previous_rows, current_row, future_rows = self.find_closest_timestamped_rows(lines, i)
+                          break
         return previous_rows, current_row, future_rows
 
     def highlight_rows_in_pdf(self, txt_filename, pdf_filename):
@@ -136,25 +251,45 @@ class BFHighlighter:
             line_height = 12
 
             for line in txt_file:
-                if line in current_row and not(line in crossed_rows):
-                    c.setFillColor(colors.yellow)
+                # line_with_diff = line.strip()
+                # # Check if line has quantities and add the diff_qty with + or - sign
+                # if self.QUANTITY_PATTERN.search(line) and self.START_PATTERN.match(line) and not(self.TIME_PATTERN.search(line)):
+                #     print("reached quantity line")
+                #     received_qty, order_qty, diff_qty = self.extract_quantities(line)
+                #     if received_qty is not None and order_qty is not None:
+                #         if diff_qty is not None:
+                #           if received_qty > order_qty:
+                #             diff_qty = f"+{diff_qty}"
+                #           elif received_qty < order_qty:
+                #             diff_qty = f"-{diff_qty}"
+                #     # Reconstruct the line with the diff_qty with sign
+                #     line_parts = line.split()
+                #     # Assume the last part is diff_qty
+                #     line_parts[-1] = str(diff_qty)
+                #     line_with_diff = '              '.join(line_parts)
+
+                # if line in current_row and not(line in crossed_rows):
+                if line in current_row:
+                    c.setFillColor(colors.red) #high
                     c.rect(30, y_position - 2, width - 60, line_height, fill=True, stroke=False)
                     c.setFillColor(colors.black)
-                elif line in previous_rows and not(line in crossed_rows):
-                    c.setFillColor(colors.red)
+                elif line in previous_rows:
+                    c.setFillColor(colors.orange) #med
                     c.rect(30, y_position - 2, width - 60, line_height, fill=True, stroke=False)
                     c.setFillColor(colors.black)
-                elif line in future_rows and not(line in crossed_rows):
-                    c.setFillColor(colors.green)
+                elif line in future_rows: #plot low priority last in the elif structure so it can be ovewritten
+                    c.setFillColor(colors.yellow) #low
                     c.rect(30, y_position - 2, width - 60, line_height, fill=True, stroke=False)
                     c.setFillColor(colors.black)
-                elif line in crossed_rows:
+
+                if line in crossed_rows:
                     c.setFillColor(colors.black)
                     c.setLineWidth(1)  # Set line width for crossing out
                     offset = 2
                     c.line(30, y_position + line_height / 2 - offset, width, y_position + line_height / 2 - offset)
 
                 c.drawString(30, y_position, line.strip())
+                # c.drawString(30, y_position, line_with_diff.strip())
                 y_position -= line_height
 
                 if y_position < 40:
@@ -163,6 +298,15 @@ class BFHighlighter:
                     y_position = height - 40
 
         c.save()
+        print("[RED] Likely Mixed Event Occurence: ", current_row)
+        print("[ORANGE] Likely Mixed Pallet: ", previous_rows)  
+        # if len(previous_rows) == 1:
+        #     print("[ORANGE] Likely Mixed Pallets: ", previous_rows)
+        # else: 
+        #     for row in previous_rows: 
+        #         print("[ORANGE] Likely Mixed Pallets: ", row)           
+        for row in future_rows: 
+            print("[YELLOW] Partial Pallet in Positive Section: ", row)
 
     @staticmethod
     def convert_rpt_to_txt(rpt_filename, txt_filename):
@@ -190,9 +334,14 @@ class BFHighlighter:
 
             for i, line in enumerate(lines):
                 if self.TIME_PATTERN.search(line) and (self.START_PATTERN.search(line) or self.EXCLAMATION_PATTERN.search(line)) and self.LOCATION_ID_PATTERN.search(line):
-                    print("Inaccessible Location: ", line)
+                    # print("Inaccessible Location: ", line)
                     self.crossed_rows.append(line)
 
     def rpt_to_txt(self, rpt_file):
         self.convert_rpt_to_txt(rpt_file, self.txt_file_name)
         self.updatedCrossedOutRows()
+
+# if __name__ == "__main__":
+#     obj=BFHighlighter('BF1.rpt')
+#     obj.create_pdf()
+#     print("done")

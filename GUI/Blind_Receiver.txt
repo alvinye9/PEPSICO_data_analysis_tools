@@ -1,78 +1,83 @@
  Site: EAST                              BLIND RECEIVER                      Page 1  of 2
  
- Trip       : 15700184448078                                               Cases:       1584
- Completed  : Sat May 18, 2024 04:44:59                                     Cube:       3943
- Last Loader: 419                                                         Weight:       9023
- Report Date: Sat May 18, 2024 08:00:13
- Trailer    : D13303
+ Trip       : 15700184441383                                               Cases:       1117
+ Completed  : Wed May 15, 2024 02:15:26                                     Cube:       1646
+ Last Loader: 447                                                         Weight:       7904
+ Report Date: Sat May 18, 2024 14:40:22
+ Trailer    : 278107
  
  
                     Product                                   Order     Received
  Document             Code    Description                    Quantity   Quantity    Difference
 -------------------+--------+-------------------------------+----------+-----------+------------
-157001000080620418P          ATCO NORTH
-                    10889001 42ct FiryVPCub_FW32                    36        36           0
-            052024  FE3PT016             <-- D13303    4:40      419      36  A02182S
-                    12005701 18CT VPClsBox_J41                     840       840           0
-            060324  FE3PSZGH             <-- D13303   23:39      419      42  A01127N
-            060324  FE3PSZHG             <-- D13303   23:55      419      42  A01127N
-            060324  FE3PSZLE             <-- D13303    0:45      419      42  A01054S
-            060324  FE3PSZM5             <-- D13303    0:53      419      42  A01054S
-            060324  FE3PSZMN             <-- D13303    1:01      419      42  A01136N
-            060324  FE3PSZN4             <-- D13303    1:08      419      42  A01136N
-            060324  FE3PSZNJ             <-- D13303    1:15      419      42  A01051N
-            060324  FE3PSZP1             <-- D13303    1:23      419      42  A01051N
-            060324  FE3PSZQ0             <-- D13303    1:37      419      42  A03093N
-            060324  FE3PSZQG             <-- D13303    1:44      419      42  A04093S
-            060324  FE3PSZRC             <-- D13303    1:58      419      42  A01064S
-            060324  FE3PSZRQ             <-- D13303    2:03      419      42  A04093S
-            060324  FE3PSZS9             <-- D13303    2:14      419      42  A03093N
-            060324  FE3PSZV6             <-- D13303    3:09      419      42  A03205N
-            060324  FE3PSZVQ             <-- D13303    3:14      419      42  FORK_08
-            060324  FE3PSZVY             <-- D13303    3:17      419      42  A04195S
-            060324  FE3PSZW0             <-- D13303    3:19      419      42  A04195S
-            060324  FE3PSZWA             <-- D13303    3:22      419      42  A03205N
-            060324  FE3PSZWP             <-- D13303    3:25      419      42  A04057S
-            060324  FE3PSZWS             <-- D13303    3:29      419      42  A04057S
-                    12005801 18CT FlvMixVP_J15                     588       589           1
-            060324  FE3PSZX2             <-- D13303    3:35      419      42  A04027S
-            052024  FE3PSZXC             <-- D13303    3:40      419      42  A02054N
-            052024  FE3PSZXK             <-- D13303    3:43      419      42  A02088S
-            052024  FE3PSZXR             <-- D13303    3:46      419      42  A02221N
-            052024  FE3PSZXX             <-- D13303    3:50      419      42  A02221N
-            052024  FE3PSZY7             <-- D13303    3:55      419      42  A02241N
-            052024  FE3PSZY9             <-- D13303    3:59      419      42  A03217S
-            052024  FE3PSZYF             <-- D13303    4:01      419      42  A02241N
-            052024  FE3PSZYM             <-- D13303    4:05      419      42  A03217S
-            052024  FE3PSZYR             <-- D13303    4:08      419      42  A02088S
-            052024  FE3PSZYZ             <-- D13303    4:11      419      42  SRMHWY
-            052024  FE3PSZZ7             <-- D13303    4:14      419      42  SRMHWY
-            052024  FE3PSZZJ             <-- D13303    4:18      419      42  SRMHWY
-            052024  FE3PT000             <-- D13303    4:24      419      42  SRMHWY
-            052024  FE3PT00L             <-- D13303    4:34      419       1  GA45F
-                    12005901 18CT FamVPBox_J31                      84        83           1
-            052024  FE3PT007             <-- D13303    4:28      419      42  807161
-            052024  FE3PT00C             <-- D13303    4:31      419      41  A03253S
-                         4:32 419      Modified Case Count From   42   To   41
-                    12012201 42CT VPFamFun_FW44                     36        36           0
-            052024  FE3PT00W             <-- D13303    4:36      419      36  A02156N
+157001000080849183P          PL INDY NMC
+                    06270301 BEAN DIP_I40                          199       121          78
+            110124  FE3PSNCR             <-- 278107    1:55      447     118  I40
+                         1:56 447      Modified Case Count From  121   To  118
+                         1:56 447      FE3PSNCU <-- FE3PSNCR      3
+            110124  FE3PSNCU             <-- 278107    1:56      447       3  D23019
+                    06270601 9.0 HotBeanDip_I43                     24        85          61
+            110124  FE3PSMTT             <-- 278107   22:04      483      85  M241
+                    09400601 4.79 PurpCrsp_CF33B                    72        92          20
+          ! 040824  FE3PSN3A             <-- 278107   23:46      419      66  A01131S
+          ! 040824  FE3PSN7P             <-- 278107    0:38      419      26  HA28F
+                             ! Acceptance Limit Violation
+                    09985301 15oz TosAvoDip_I30                     99        99           0
+            090124  FE3PSNCK             <-- 278107    1:52      447      99  IB03F
+                    10074501 5.09 FrTurFlamas_BULK                 125       125           0
+          ! 032524  FE3PSMUQ             <-- 278107   22:14      443      59  FA07F
+          ! 032524  FE3PSMVY             <-- 278107   22:28      443      66  A01076N
+                             ! Acceptance Limit Violation
+                    10092701 1.89 Sabritone_                        48        48           0
+            050624  FE3PSNAL             <-- 278107    1:27      483      48  D23679
+                    10500101 4.29 PopcrnrChil_                      66        66           0
+            050624  FE3PSNC7             <-- 278107    1:46      447      66  A01157N
+                    11405601 8Ct MpPpcrnrMx_FW43                    42        42           0
+            040824  FE3PSMU5             <-- 278107   22:07      417      42  LA18F
+                    11424601 2.99 HotBakenet_EW10                   42        42           0
+          ! 050624  FE3PSNAF             <-- 278107    1:26      248      42  D23679
+                             ! Acceptance Limit Violation
+                    11425301 2.49 SABRITONES_EE37                  126       126           0
+            050624  FE3PSNAV             <-- 278107    1:30      447      42  D17009
+            050624  FE3PSNBD             <-- 278107    1:36      447      42  266862
+            050624  FE3PSNBS             <-- 278107    1:42      447      42  266862
+                    11643201 8CT SmpVpMx_BULK                       42        42           0
+            050624  FE3PSNDR             <-- 278107    2:06      447      42  210248
+                    11807901 15ctVP PopCnr_CF42B                    82        67          15
+          ! 042224  FE3PSMVH             <-- 278107   22:23      438      27  M137
+          ! 040824  FE3PSN7G             <-- 278107    0:34      419      40  D23003
+                             ! Acceptance Limit Violation
+                    12006501 5.99 DrDinFHQ_G28                      72        53          19
+          ! 042224  FE3PSN85             <-- 278107    0:45      419      53  G28
+                             ! Acceptance Limit Violation
+                    12013201 2.49 DrDimHM_BULK                      16        15           1
+          ! 040824  FE3PSN8E             <-- 278107    0:49      419      15  HA19F
+                             ! Acceptance Limit Violation
+                    12019601 2.69 NTC Pn Rg_                         6         6           0
+          ! 020524  FE3PSNDE             <-- 278107    2:03      447       6  C315
+                             ! Acceptance Limit Violation
  
  
  
  Site: EAST                              BLIND RECEIVER                      Page 2  of 2
  
- Trip       : 15700184448078                                               Cases:       1584
- Completed  : Sat May 18, 2024 04:44:59                                     Cube:       3943
- Last Loader: 419                                                         Weight:       9023
- Report Date: Sat May 18, 2024 08:00:13
- Trailer    : D13303
+ Trip       : 15700184441383                                               Cases:       1117
+ Completed  : Wed May 15, 2024 02:15:26                                     Cube:       1646
+ Last Loader: 447                                                         Weight:       7904
+ Report Date: Sat May 18, 2024 14:40:22
+ Trailer    : 278107
  
  
                     Product                                   Order     Received
  Document             Code    Description                    Quantity   Quantity    Difference
 -------------------+--------+-------------------------------+----------+-----------+------------
+                    12157301 1.69 SpitzSlt_H23                      35        70          35
+            050624  FE3PSND7             <-- 278107    2:00      447      70  H23
+                    12157501 1.69 SpitzBBQ_ 118226                  21        21           0
+          ! 032524  FE3PSMUG             <-- 278107   22:11      483      21  FL_RK304
+                             ! Acceptance Limit Violation
 ------------------------------------------------------------------------------------------------
-                                                     Total:       1584      1584
+                                                     Total:       1117      1120
  
  
  
