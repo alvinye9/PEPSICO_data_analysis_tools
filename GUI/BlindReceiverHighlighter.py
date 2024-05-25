@@ -239,6 +239,8 @@ class BFHighlighter:
         :param txt_filename: The input .txt file path.
         :param pdf_filename: The output .pdf file path.
         """
+        indent = "          "
+        big_indent = ""
         crossed_rows = self.crossed_rows
         previous_rows, current_row, future_rows = self.find_highlight_rows(txt_filename)
 
@@ -251,24 +253,32 @@ class BFHighlighter:
             line_height = 12
 
             for line in txt_file:
-                # line_with_diff = line.strip()
-                # # Check if line has quantities and add the diff_qty with + or - sign
-                # if self.QUANTITY_PATTERN.search(line) and self.START_PATTERN.match(line) and not(self.TIME_PATTERN.search(line)):
-                #     print("reached quantity line")
-                #     received_qty, order_qty, diff_qty = self.extract_quantities(line)
-                #     if received_qty is not None and order_qty is not None:
-                #         if diff_qty is not None:
-                #           if received_qty > order_qty:
-                #             diff_qty = f"+{diff_qty}"
-                #           elif received_qty < order_qty:
-                #             diff_qty = f"-{diff_qty}"
-                #     # Reconstruct the line with the diff_qty with sign
-                #     line_parts = line.split()
-                #     # Assume the last part is diff_qty
-                #     line_parts[-1] = str(diff_qty)
-                #     line_with_diff = '              '.join(line_parts)
-
-                # if line in current_row and not(line in crossed_rows):
+                line_with_diff = line
+                # Check if line is a "quantity line" and add the diff_qty with + or - sign
+                if self.QUANTITY_PATTERN.search(line) and self.START_PATTERN.match(line) and not(self.TIME_PATTERN.search(line)):
+                    # Extract quantities and calculate diff_qty
+                    quantities = re.findall(r'\d+', line)
+                    if len(quantities) >= 3:
+                        received_qty = int(quantities[-2])
+                        order_qty = int(quantities[-3])
+                        diff_qty = int(quantities[-1])
+                        if received_qty > order_qty:
+                            diff_sign = "+"
+                        elif received_qty < order_qty:
+                            diff_sign = "-"
+                        else:
+                            diff_sign = ""
+                        diff_qty_str = f"{diff_sign}{diff_qty}"
+                        # Reconstruct the line with the diff_qty with sign
+                        line_with_diff = re.sub(r'(\d+)\s*$', diff_qty_str, line)
+                    line_with_indent = line_with_diff
+                elif self.TIME_PATTERN.search(line) and (self.START_PATTERN.search(line) or self.EXCLAMATION_PATTERN.search(line)):
+                    line_with_indent = indent + line.strip()
+                elif "Acceptance" in line:
+                    line_with_indent = indent + line.strip()
+                else:
+                    line_with_indent = line.strip()
+                    
                 if line in current_row:
                     c.setFillColor(colors.red) #high
                     c.rect(30, y_position - 2, width - 60, line_height, fill=True, stroke=False)
@@ -288,8 +298,9 @@ class BFHighlighter:
                     offset = 2
                     c.line(30, y_position + line_height / 2 - offset, width, y_position + line_height / 2 - offset)
 
-                c.drawString(30, y_position, line.strip())
+                # c.drawString(30, y_position, line.strip())
                 # c.drawString(30, y_position, line_with_diff.strip())
+                c.drawString(30, y_position, line_with_indent)
                 y_position -= line_height
 
                 if y_position < 40:
