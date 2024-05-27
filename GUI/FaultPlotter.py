@@ -2,6 +2,8 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import webbrowser
 import matplotlib.cm as cm
+import plotly.express as px
+import plotly.graph_objects as go
 from matplotlib.colors import ListedColormap
 
 class FaultPlotter:
@@ -67,12 +69,24 @@ class FaultPlotter:
             bottom = None
             # colors = plt.cm.get_cmap('tab20', len(pivot_table.columns))
 
+            # Create the interactive plot
+            fig = go.Figure()
+            
             for i, fault_type in enumerate(pivot_table.columns):
+                
                 bars = plt.bar(pivot_table.index.astype(str), pivot_table[fault_type], bottom=bottom, label=fault_type, color=colors[i])
                 if bottom is None:
                     bottom = pivot_table[fault_type]
                 else:
                     bottom += pivot_table[fault_type]
+                    
+                fig.add_trace(
+                    go.Bar(
+                        x=pivot_table.index.astype(str),
+                        y=pivot_table[fault_type],
+                        name=fault_type,
+                    )
+                )
 
             # Calculate the maximum bar height for y-axis limit adjustment
             max_height = vehicle_totals.max()
@@ -94,7 +108,36 @@ class FaultPlotter:
             # Adjust layout to make space for the legend
             plt.tight_layout(rect=[0, 0, 1, 0.95])
             plt.savefig("Fault_Data.jpg")
-            webbrowser.open_new('Fault_Data.jpg')
+            # webbrowser.open_new('Fault_Data.jpg')
+            
+
+            # Add annotations for the total faults
+            for i, total in enumerate(vehicle_totals):
+                fig.add_annotation(
+                    x=str(i),  
+                    y=total,
+                    text=str(int(total)),
+                    showarrow=False,
+                    xref="x",
+                    yshift=10,
+                    font=dict(size=12, color='black')
+                )
+
+            # Update the layout to include an interactive legend
+            fig.update_layout(
+                barmode='stack',
+                xaxis_title='Vehicle Number',
+                yaxis_title='Fault Count',
+                title='Faults by Vehicle Number',
+                legend_title='Fault Types',
+                hovermode='closest'
+            )
+            
+            # Save the plot to an HTML file and open it in a browser
+            fig.write_html('Fault_Data.html')
+            webbrowser.open_new('Fault_Data.html')
+            
+
             plt.show()
         except pd.errors.EmptyDataError:
             print("Error: The CSV file is empty.")
@@ -102,3 +145,5 @@ class FaultPlotter:
             print("Error: The CSV file format is incorrect.")
         except Exception as e:
             print(f"An error occurred: {e}")
+            
+        

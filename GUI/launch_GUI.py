@@ -52,6 +52,7 @@ class GUI:
         if file_path:
             fault_plotter = FaultPlotter(file_path)
             fault_plotter.plot_faults()
+            # fault_plotter.plot_faults_html()
 
 class TextRedirector(object):
     def __init__(self, widget, tag="stdout"):

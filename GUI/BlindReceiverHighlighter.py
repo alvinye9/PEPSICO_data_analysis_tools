@@ -14,7 +14,12 @@ class BFHighlighter:
         self.EXCLAMATION_PATTERN = re.compile(r'!')  # start with !
 
         self.rpt_file_path = rpt_file_path
+        
+        self.red_rows = []
+        self.orange_rows = []
+        self.yellow_rows = []
         self.crossed_rows = []
+        
         self.pos_quant_indices = []
         self.neg_quant_indices = []
         self.even_quant_indices = []
@@ -54,7 +59,6 @@ class BFHighlighter:
 
         return current_section
 
-
     def extract_quantities(self, line):
         """
         Extract the last two quantities from the line.
@@ -84,20 +88,23 @@ class BFHighlighter:
         :param line: The line from the file.
         :return: Tuple of (received quantity, order quantity) if both are found, else (None, None).
         """
-        quantities = re.findall(r'\d+', line)
+        # quantities = re.findall(r'\d+', line) #find numeric quantities
+        quantities = re.findall(r'\b\w+\b', line) #find alpha-numeric quantities
         if len(quantities) >= 3:
             pallet_size = int(quantities[-2])
             # print("Pallet Size: ",pallet_size)
             return pallet_size
         return None
 
-    def find_closest_timestamped_rows(self, lines, start_index):
+    def update_colored_rows(self, lines, start_index):
         """
-        Find the closest 2 timestamped rows chronologically before and after the start index.
+        Based on the timestamp of a starting row, calculate the row where there is likely a mixed event (high priority), 
+        then find the rows chronologically prior to and after the mixed event that is within a positive section (medium priority).
+        Low priority rows are any rows within positive sections and are partial pallets (indivisible by 6) 
 
         :param lines: The list of lines from the file.
         :param start_index: The starting index to search around.
-        :return: A tuple of three lists: previous rows, current row, and future rows.
+        :return: A tuple of three lists: medium_priority_rows, high_priority_row, low_priority_rows
         """
         full_pallet_rows_with_times = []
         partial_pallet_rows_with_times = []
@@ -128,7 +135,7 @@ class BFHighlighter:
         # Filter lines where the time is greater than the target time
         filtered_lines = []
         for line, time in pos_sec_rows_with_times:
-        #   print(time, " is greater than ", target_time, " ", time < target_time)
+            # print(time, " is less than ", target_time, " ", time < target_time)
             if time < target_time:
                 filtered_lines.append(line)
         # print(filtered_lines)
@@ -137,17 +144,18 @@ class BFHighlighter:
             key=lambda x: self.parse_time(self.TIME_PATTERN.search(x).group())
         )
         # print("Timestamps before: ", target_time, " : ", sorted_filtered_lines)
-
+        # print(sorted_filtered_lines)
         previous_rows = []
         previous_rows = sorted_filtered_lines[-2:] #if sorted_filtered_lines else [] #extract the previous two items
+        # print(previous_rows)
         # print("Number of Previous Timestamps: ", len(previous_rows))
         medium_priority_rows = []
         high_priority_row = []
         if(len(previous_rows)==2):
-            high_priority_row = previous_rows[1]
-            medium_priority_rows = previous_rows[0]
+            high_priority_row.append(previous_rows[1])
+            medium_priority_rows.append(previous_rows[0])
         elif(len(previous_rows)==1):
-            high_priority_row = previous_rows[0]
+            high_priority_row.append(previous_rows[0])
         else:
             high_priority_row = []
             medium_priority_rows = []
@@ -158,7 +166,7 @@ class BFHighlighter:
         # Calculate Future Timestamps in positive sections
         filtered_lines = []
         for line, time in pos_sec_rows_with_times:
-        #   print(time, " is less than target_time", target_time, "  ", time > target_time)
+            print(time, " is greater than target_time", target_time, "  ", time > target_time)
             if time > target_time:
                 filtered_lines.append(line)
         # print(filtered_lines)
@@ -170,23 +178,32 @@ class BFHighlighter:
 
         future_rows = []
         if sorted_filtered_lines:
-            future_rows = sorted_filtered_lines[1:] #extract the first item
+            future_rows = sorted_filtered_lines[0] #extract the first item
+        # print("Sorted Future Rows (FIRST ITEM): "," ", type(sorted_filtered_lines), " ", sorted_filtered_lines[0])
+        # print("Future Rows: ", future_rows)
+        # print("Medium Priority Rows; ", medium_priority_rows)
         if(len(future_rows) > 0):
-            medium_priority_rows.append(future_rows[0])
+            medium_priority_rows.append(future_rows)
         # else:
-        #     print("NO FUTURE ROWS")
+            # print("No Rows follow mixed event and are in positive section")
 
         for line, time in pos_sec_rows_with_times:
             pallet_size = self.extract_pallet_size(line)
             if not(pallet_size % 6 == 0):
+                # print("Partial Pallet: ", pallet_size, " ", line)
                 partial_pallet_rows_with_times.append(line)
 
         low_priority_rows = partial_pallet_rows_with_times
         # print("Low Priority: Partial Pallets")
 
         if(len(high_priority_row) == 0):
-            high_priority_row = lines[start_index]
+            high_priority_row.append(lines[start_index])
 
+        self.red_rows.extend(high_priority_row) 
+        # print("Red Row size: ", len(high_priority_row))
+        # print("Orange Rows size: ", len(medium_priority_rows))
+        self.orange_rows.extend(medium_priority_rows)
+        self.yellow_rows.extend(low_priority_rows)
         return medium_priority_rows, high_priority_row, low_priority_rows
 
     def updateIndices(self):
@@ -205,39 +222,30 @@ class BFHighlighter:
 
     def find_highlight_rows(self, txt_filename):
         """
-        Finds the rows where received quantity is less than order quantity and
-        returns the closest 2 rows with timestamps before and after the last timestamped row in that section
-
-        :param txt_filename: The input .txt file path.
-        :return: Three lists of rows to be highlighted: previous rows, current row, and future rows.
+        Finds the rows where received quantity is less than order quantity and then returns the high, medium, and low priority rows with respect to that information
+        Note: the terms "previous" "current" and "future" are depracted, they refer to medium, high, and low priority respectively
         """
-        previous_rows = []
-        current_row = []
-        future_rows = []
-        crossed_rows = []
+        medium_priority_rows = []
+        high_priority_row = []
+        low_priority_rows = []
 
         with open(txt_filename, 'r') as txt_file:
             lines = txt_file.readlines()
             for i, line in enumerate(lines):
-              if self.QUANTITY_PATTERN.search(line) and self.START_PATTERN.match(line) and not(self.TIME_PATTERN.search(line)):  # finds "Quantity Line"
-                  # print("quantity Line: ", line, " Index: ", i)
-                  received_qty, order_qty, diff_qty = self.extract_quantities(line)
-                  if received_qty is not None and order_qty is not None and received_qty < order_qty:
-
-                      if i + 1 < len(lines):  # make sure that current line is not the last line
-                          i += 1
-                          next_line = lines[i]  # updates next_line to be first timestamped line in negative section
-                          previous_rows, current_row, future_rows = self.find_closest_timestamped_rows(lines, i)
-                          break
-        return previous_rows, current_row, future_rows
+                if self.QUANTITY_PATTERN.search(line) and self.START_PATTERN.match(line) and not(self.TIME_PATTERN.search(line)):  # finds "Quantity Line"
+                    # print("quantity Line: ", line, " Index: ", i)
+                    received_qty, order_qty, diff_qty = self.extract_quantities(line)
+                    if received_qty is not None and order_qty is not None and received_qty < order_qty:
+                        if i + 1 < len(lines):  # make sure that current line is not the last line
+                            i += 1
+                            next_line = lines[i]  # updates next_line to be first timestamped line in negative section
+                            medium_priority_rows, high_priority_row, low_priority_rows  = self.update_colored_rows(lines, i)
+                            # break
+        return medium_priority_rows, high_priority_row , low_priority_rows 
 
     def highlight_rows_in_pdf(self, txt_filename, pdf_filename):
         """
-        Highlights the rows with the closest times to the given highlight time or
-        the rows where received quantity is less than order quantity in the PDF.
-
-        :param txt_filename: The input .txt file path.
-        :param pdf_filename: The output .pdf file path.
+        Highlights and crosses out rows as appropriate
         """
         indent = "          "
         big_indent = ""
@@ -279,15 +287,18 @@ class BFHighlighter:
                 else:
                     line_with_indent = line.strip()
                     
-                if line in current_row:
+                # if line in current_row:
+                if line in self.red_rows:    
                     c.setFillColor(colors.red) #high
                     c.rect(30, y_position - 2, width - 60, line_height, fill=True, stroke=False)
                     c.setFillColor(colors.black)
-                elif line in previous_rows:
+                # elif line in previous_rows:
+                elif line in self.orange_rows:
                     c.setFillColor(colors.orange) #med
                     c.rect(30, y_position - 2, width - 60, line_height, fill=True, stroke=False)
                     c.setFillColor(colors.black)
-                elif line in future_rows: #plot low priority last in the elif structure so it can be ovewritten
+                # elif line in future_rows: #plot low priority last in the elif structure so it can be ovewritten
+                elif line in self.yellow_rows:
                     c.setFillColor(colors.yellow) #low
                     c.rect(30, y_position - 2, width - 60, line_height, fill=True, stroke=False)
                     c.setFillColor(colors.black)
@@ -323,9 +334,6 @@ class BFHighlighter:
     def convert_rpt_to_txt(rpt_filename, txt_filename):
         """
         Converts a .rpt file to a .txt file while maintaining row structure.
-
-        :param rpt_filename: The input .rpt file path.
-        :param txt_filename: The output .txt file path.
         """
         with open(rpt_filename, 'r') as rpt_file, open(txt_filename, 'w') as txt_file:
             for line in rpt_file:
@@ -333,13 +341,16 @@ class BFHighlighter:
 
     def create_pdf(self):
         """
-        Prompts the user for a desired time and creates the highlighted PDF.
+        Creates the highlighted PDF.
         """
         self.highlight_rows_in_pdf(self.txt_file_name, 'Blind_Receiver_highlighted.pdf')
         print(f"Highlighted rows written to Blind_Receiver_highlighted.pdf.")
         webbrowser.open_new('Blind_Receiver_highlighted.pdf')
 
     def updatedCrossedOutRows(self):
+        """
+        Updates the array storing inaccessible locations
+        """
         with open(self.txt_file_name, 'r') as txt_file:
             lines = txt_file.readlines()
 
