@@ -4,6 +4,7 @@ from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
 from reportlab.lib import colors
 import webbrowser
+import os
 
 class BFHighlighter:
     def __init__(self, rpt_file_path):
@@ -337,7 +338,9 @@ class BFHighlighter:
         """
         self.highlight_rows_in_pdf(self.txt_file_name, './Data_Analysis_Suite_Output_Files/Blind_Receiver_highlighted.pdf')
         print(f"Highlighted rows written to Blind_Receiver_highlighted.pdf saved in ./Data_Analysis_Suite_Output_Files")
-        webbrowser.open_new('./Data_Analysis_Suite_Output_Files/Blind_Receiver_highlighted.pdf')
+        # webbrowser.open_new('./Data_Analysis_Suite_Output_Files/Blind_Receiver_highlighted.pdf')
+        output_file = os.path.abspath('./Data_Analysis_Suite_Output_Files/Blind_Receiver_highlighted.pdf')
+        webbrowser.open_new(output_file)
 
     def isInaccessibleLocation(self,line):
         return self.TIME_PATTERN.search(line) and (self.START_PATTERN.search(line) or self.EXCLAMATION_PATTERN.search(line)) and self.LOCATION_ID_PATTERN.search(line)

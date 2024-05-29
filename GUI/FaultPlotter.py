@@ -5,6 +5,7 @@ import matplotlib.cm as cm
 import plotly.express as px
 import plotly.graph_objects as go
 from matplotlib.colors import ListedColormap
+import os
 
 class FaultPlotter:
     def __init__(self, csv_file_path):
@@ -135,7 +136,9 @@ class FaultPlotter:
             
             # Save the plot to an HTML file and open it in a browser
             fig.write_html('./Data_Analysis_Suite_Output_Files/Fault_Data_interactive.html')
-            webbrowser.open_new('./Data_Analysis_Suite_Output_Files/Fault_Data_interactive.html')
+            output_file = os.path.abspath('./Data_Analysis_Suite_Output_Files/Fault_Data_interactive.html')
+            webbrowser.open_new(output_file)
+            # webbrowser.open_new('./Data_Analysis_Suite_Output_Files/Fault_Data_interactive.html')
             
 
             plt.show()

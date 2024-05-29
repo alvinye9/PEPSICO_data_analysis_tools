@@ -3,6 +3,7 @@ import re
 from collections import defaultdict, Counter
 import matplotlib.pyplot as plt
 import webbrowser
+import os
 
 ## INCLUDE NOTE IN GUI TO ONLY EXPORT DATA FOR FORK_21 TO FORK_25
 class RecirculationProcessor:
@@ -89,7 +90,9 @@ class RecirculationProcessor:
                         })
 
         print(f"Circulation data has been successfully written to {output_circulation_file} saved in ./Data_Analysis_Suite_Output_Files")
-        webbrowser.open(output_circulation_file)
+        output_file = os.path.abspath('./Data_Analysis_Suite_Output_Files/circulation_data_sorted.csv')
+        webbrowser.open_new(output_file)
+        # webbrowser.open(output_circulation_file)
         self.plot_data(circulation_data)
 
 
