@@ -1,6 +1,7 @@
 # Ignore the dataset directory
 /dataset/
 /classes/
+/GUI/Data_Analysis_Suite_Output_Files
 
 # Ignore Python bytecode files
 __pycache__/

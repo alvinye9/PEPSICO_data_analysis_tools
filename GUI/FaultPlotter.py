@@ -107,7 +107,7 @@ class FaultPlotter:
 
             # Adjust layout to make space for the legend
             plt.tight_layout(rect=[0, 0, 1, 0.95])
-            plt.savefig("Fault_Data.jpg")
+            plt.savefig("./Data_Analysis_Suite_Output_Files/Fault_Data_Plot.jpg")
             # webbrowser.open_new('Fault_Data.jpg')
             
 
@@ -134,8 +134,8 @@ class FaultPlotter:
             )
             
             # Save the plot to an HTML file and open it in a browser
-            fig.write_html('Fault_Data.html')
-            webbrowser.open_new('Fault_Data.html')
+            fig.write_html('./Data_Analysis_Suite_Output_Files/Fault_Data_interactive.html')
+            webbrowser.open_new('./Data_Analysis_Suite_Output_Files/Fault_Data_interactive.html')
             
 
             plt.show()
