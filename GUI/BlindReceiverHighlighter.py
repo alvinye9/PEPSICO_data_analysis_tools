@@ -132,17 +132,17 @@ class BFHighlighter:
         for line, time in pos_sec_rows_with_times:
             if time < target_time:
                 filtered_lines.append(line)
-                
+
         sorted_filtered_lines = sorted(
             filtered_lines,
             key=lambda x: self.parse_time(self.TIME_PATTERN.search(x).group())
         )
 
         previous_rows = []
-        previous_rows = sorted_filtered_lines[-2:] 
+        previous_rows = sorted_filtered_lines[-2:]
         medium_priority_rows = []
         high_priority_row = []
-    
+
         if(len(previous_rows)==2):
             high_priority_row.append(previous_rows[1])
             medium_priority_rows.append(previous_rows[0])
@@ -166,8 +166,8 @@ class BFHighlighter:
         if sorted_filtered_lines:
             future_rows = sorted_filtered_lines[0]
 
-        if(len(future_rows) > 0):
-            medium_priority_rows.append(future_rows)
+        # if(len(future_rows) > 0):
+            # medium_priority_rows.append(future_rows) #future rows after mixed may not need to be checked per say
 
         for line, time in pos_sec_rows_with_times:
             pallet_size = self.extract_pallet_size(line)
@@ -177,8 +177,16 @@ class BFHighlighter:
         low_priority_rows = partial_pallet_rows_with_times
 
         # Ensure high_priority_row is set correctly if there are no positive sections
-        if len(high_priority_row) == 0:
-            last_timestamped_row = max(idx for idx, line in enumerate(lines) if self.isTimestampedRow(line) and not(self.extract_pallet_size(line) % 6 ==0) ) #self.TIME_PATTERN.search(line) and (self.START_PATTERN.search(line) or self.EXCLAMATION_PATTERN.search(line))) #the last timestamped row
+        if len(self.pos_quant_indices) == 0:
+            filtered_indices = []
+            for idx, line in enumerate(lines):
+                if self.isTimestampedRow(line) and not(self.extract_pallet_size(line) % 6 == 0):
+                    filtered_indices.append(idx)
+                if len(filtered_indices) > 0:
+                  last_timestamped_row = max(filtered_indices)
+                else:
+                  last_timestamped_row = start_index
+              # last_timestamped_row = max(idx for idx, line in enumerate(lines) if self.isTimestampedRow(line) and not(self.extract_pallet_size(line) % 6 ==0) ) #self.TIME_PATTERN.search(line) and (self.START_PATTERN.search(line) or self.EXCLAMATION_PATTERN.search(line))) #the last timestamped row
             if start_index > max(self.neg_quant_indices + self.pos_quant_indices + self.even_quant_indices):
                 last_index = last_timestamped_row
             next_index = min(
