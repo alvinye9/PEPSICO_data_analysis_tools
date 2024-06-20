@@ -48,7 +48,7 @@ class GUI:
         self.create_button_with_info("Highlight Blind Receiver (.rpt)", self.browse_rpt, 
                                      "How to Gather Dataset From ICS:\n 1. Reports -> Trip Operations -> Blind Receiver/Cover Sheet\n 2. Enter Trip #\n 3. Check 'Pallet Details'\n 4. Click checkmark at the top left of screen to export data")
         self.create_button_with_info("Plot Fault Data (.csv)", self.browse_csv, 
-                                     "How to Gather Dataset From ATOM:\n 1. Click Data on the left tab\n 2. Select Date Range\n 3. Click execute\n 4. Click 'export' to export data")
+                                     "How to Gather Fault Data From ATOM:\n 1. Click Stats on the left tab\n 2. Select Vehicle Alarms\n 3. Select Vehicle Alarm Summary\n 4. Ensure group is 'Vehicle Alarm Type'\n 5. Select Date Range\n 6. Click execute\n 7. Click 'export' to export data")
         self.create_button_with_info("Process Recirculation Data (.rpt)", self.run_recirculation_processor, 
                                      "How to Gather Dataset from ICE:\n 1. Reports -> Warehouse Operations -> Location Event\n 2. For most accurate results, under 'Available Locations' select Fork_21 to Fork_25 ONLY\n 3. Click Green right arrow\n 4. Check 'all groups' and click green search button\n 5. Check 'all events' at the bottom of the screen\n 6. Click checkmark at the top left of screen to export data" )
 
@@ -71,8 +71,8 @@ class GUI:
         label = tk.Label(self.info_popup, text=text, wraplength=380, justify=tk.LEFT)
         label.pack(pady=10, padx=10)
 
-        close_button = tk.Button(self.info_popup, text="X", command=self.info_popup.destroy)
-        close_button.pack(pady=10)
+        # close_button = tk.Button(self.info_popup, text="X", command=self.info_popup.destroy)
+        # close_button.pack(pady=10)
 
     def browse_rpt(self):
         file_path = filedialog.askopenfilename(filetypes=[("RPT files", "*.rpt")])
