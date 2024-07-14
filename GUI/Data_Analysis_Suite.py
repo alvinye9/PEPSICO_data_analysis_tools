@@ -3,6 +3,7 @@ from tkinter import filedialog, simpledialog, scrolledtext
 from FaultPlotter import FaultPlotter
 from BlindReceiverHighlighter import BFHighlighter
 from RecirculationProcessor import RecirculationProcessor
+from MixIdentifier import MixIdentifier
 import sys
 from PIL import Image, ImageTk
 import os
@@ -50,13 +51,16 @@ class GUI:
         self.create_button_with_info("Plot Fault Data (.csv)", self.browse_csv, 
                                      "How to Gather Fault Data From ATOM:\n 1. Click Stats on the left tab\n 2. Select Vehicle Alarms\n 3. Select Vehicle Alarm Summary\n 4. Ensure group is 'Vehicle Alarm Type'\n 5. Select Date Range\n 6. Click execute\n 7. Click 'export' to export data")
         self.create_button_with_info("Process Recirculation Data (.rpt)", self.run_recirculation_processor, 
-                                     "How to Gather Dataset from ICE:\n 1. Reports -> Warehouse Operations -> Location Event\n 2. For most accurate results, under 'Available Locations' select Fork_21 to Fork_25 ONLY\n 3. Click Green right arrow\n 4. Check 'all groups' and click green search button\n 5. Check 'all events' at the bottom of the screen\n 6. Click checkmark at the top left of screen to export data" )
-
+                                     "How to Gather Dataset from ICS:\n 1. Reports -> Warehouse Operations -> Location Event\n 2. For most accurate results, under 'Available Locations' select Fork_21 to Fork_25 ONLY\n 3. Click Green right arrow\n 4. Check 'all groups' and click green search button\n 5. Check 'all events' at the bottom of the screen\n 6. Click checkmark at the top left of screen to export data" )
+        self.create_button_with_info("Process Pallet History Data (copy-and-paste))", self.show_mix_identifier_input,
+                                     "How to Gather Pallet History Data from ICS:\n 1. Misc -> Pallet History\n 2. Input Desired Location and Timeframe\n 3. Copy all the Pallet History Info\n 4. Click 'Process Pallet History Data' button in Data Analysis Suite GUI\n 5. Paste coped info into large text box and enter Location into small text box") 
+    
     def create_button_with_info(self, button_text, command, info_text):
         frame = tk.Frame(self.root)
         frame.pack(pady=10, anchor=tk.W)
 
-        button = tk.Button(frame, text=button_text, command=command)
+        # button = tk.Button(frame, text=button_text, command=command)
+        button = tk.Button(frame, text=button_text, command=lambda: self.close_all_windows_and_execute(command))
         button.pack(side=tk.LEFT)
 
         info_button = tk.Button(frame, text="?", command=lambda: self.show_info(button_text, info_text), width=2)
@@ -95,6 +99,45 @@ class GUI:
         if file_path:
             RCProcessor = RecirculationProcessor(file_path)
             RCProcessor.create_sorted_csv()
+            
+    def show_mix_identifier_input(self):
+        # Create a new window for input
+        self.input_window = tk.Toplevel(self.root)
+        self.input_window.title("Input Pallet History Data")
+
+        # Create location entry
+        self.location_label = tk.Label(self.input_window, text="Enter location here (e.g., AGVO_01):")
+        self.location_label.pack(pady=5)
+        self.location_entry = tk.Entry(self.input_window, width=50)
+        self.location_entry.pack(pady=5)
+        
+        # Add a title or text above the larger text entry box
+        self.text_entry_title = tk.Label(self.input_window, text="Paste Pallet History Data here:")
+        self.text_entry_title.pack(pady=5)
+
+        # Create text area for input text
+        self.input_text_area = scrolledtext.ScrolledText(self.input_window, wrap=tk.WORD, width=100, height=10)
+        self.input_text_area.pack(pady=10)
+
+        # Create button to run MixIdentifier
+        self.process_button = tk.Button(self.input_window, text="Run Mix Identifier", command=self.run_mix_identifier)
+        self.process_button.pack(pady=10)
+
+    def run_mix_identifier(self):
+        location_input = self.location_entry.get()
+        input_text = self.input_text_area.get("1.0", tk.END)
+        mix_identifier = MixIdentifier(location_input, input_text)
+        mix_identifier.update_values()
+        # mix_identifier.plot_data()
+        # mix_identifier.create_csv()
+        
+    def close_all_windows_and_execute(self, command):
+        # Close all child windows
+        for widget in self.root.winfo_children():
+            if isinstance(widget, tk.Toplevel):
+                widget.destroy()
+        # Execute the command
+        command()
     
 class TextRedirector(object):
     def __init__(self, widget, tag="stdout"):
