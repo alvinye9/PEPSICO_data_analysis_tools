@@ -18,7 +18,7 @@ class MixIdentifier:
         self.unique_pallets = None
 
         # Define the pattern to match EVT2 lines with 'To AGVO_01' or 'From AGVO_01'
-        self.pattern = re.compile(r'EVT2 Opr .*? Moved Moveable (\w+) From (\w+) .*? To (\w+) .*? Shift: C')
+        self.pattern = re.compile(r'EVT2 Opr .*? Moved Moveable (\w+) From (\w+) .*? To (\w+) .*? Shift:')
         self.time_pattern = re.compile(r'EVT1 (\w+ \d+ \d+:\d+:\d+) I-OPRMOVMOV')
 
     def update_values(self):
@@ -71,7 +71,7 @@ class MixIdentifier:
             plt.text(1.2, -1.0, "From: " + self.location_input )
 
         plt.gca().invert_yaxis()
-        plt.xticks([0, 1], ['To AGVO_01', 'From AGVO_01'])
+        plt.xticks([0, 1], [f'To {self.location_input}', f'From {self.location_input}'])
         plt.title(f'Pallet IDs To and From AGVO_01\nTime Range: {self.time_range}')
         plt.axis('off')
 
