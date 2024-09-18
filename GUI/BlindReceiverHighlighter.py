@@ -259,6 +259,9 @@ class BFHighlighter:
         big_indent = ""
         crossed_rows = self.crossed_rows
         previous_rows, current_row, future_rows = self.find_highlight_rows(txt_filename)
+        
+        indent_length = len(indent)  # Length of the original indentation
+        asterisk_indent = "*** "  # Indent with asterisks for high-priority (red) rows
 
         c = canvas.Canvas(pdf_filename, pagesize=letter)
         width, height = letter
@@ -294,20 +297,13 @@ class BFHighlighter:
                 else:
                     line_with_indent = line.strip()
 
+                # Replace part of the indent with asterisks based on priority level
                 if line in self.red_rows:
-                    c.setFillColor(colors.red) #high
-                    c.rect(30, y_position - 2, width - 60, line_height, fill=True, stroke=False)
-                    c.setFillColor(colors.black)
-
+                    line_with_indent = asterisk_indent + line_with_indent[len(asterisk_indent):]  # Replace beginning of indent with "***"
                 elif line in self.orange_rows:
-                    c.setFillColor(colors.orange) #med
-                    c.rect(30, y_position - 2, width - 60, line_height, fill=True, stroke=False)
-                    c.setFillColor(colors.black)
-                #plot low priority last in the elif structure so it can be ovewritten
+                    line_with_indent = "** " + line_with_indent[3:]  # Replace beginning of indent with "**"
                 elif line in self.yellow_rows:
-                    c.setFillColor(colors.yellow) #low
-                    c.rect(30, y_position - 2, width - 60, line_height, fill=True, stroke=False)
-                    c.setFillColor(colors.black)
+                    line_with_indent = "* " + line_with_indent[2:]  # Replace beginning of indent with "*"
 
                 if line in crossed_rows:
                     c.setFillColor(colors.black)
